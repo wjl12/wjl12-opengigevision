@@ -1,0 +1,119 @@
+pc -> camera
+------------
+NOTE: for general config interface: 16/32 bit numbers are stored as BIG ENDIAN format!
+
+message header = 8 bytes
+0-1: (short) magic number: 0x42, 0x01
+2-3: (short) message type: 0x00, 0x??
+4-5: (short) payload size in bytes
+6-7: (short) incremental message number (nost NOT be 0!)(will be copied to reply)
+xxx: payload
+-----------------
+ 
+
+camera -> pc
+------------
+message header = 8 bytes
+0-1: 0x00, 0x00
+2-3: (short) message type: 0x00, 0x8x (= received type +1)
+4-5: (short) payload size in bytes
+6-7: (short) message number from the pc message
+xxx payload
+
+
+message types:
+NOTE: each message type is replied by the camera with a type id+1
+
+0x02: device detect?
+used as type in broadcast message to 169.254.255.255 -> camera replies with an identifier message
+
+0x80: read config memory (also: lifesign?)
+- messages of this type are sent at least once per second
+  (if no config data is exchanged, the '0x00000a00' memory is read approx. once every 0.7 seconds)
+- payload = 32bit address(es) of memory to read (values are read as 32bit, addresses can be concatenated)
+- reply message is the same size as the request
+
+0x82: write config memory
+- payload = 32bit: address, 32bit: target value
+- reply message contains either payload 0x00000001 (= success) or 0x00000000 (= error)
+
+0x84: read config memory blocks
+- payload = 32bit: start address, 32bit: size in bytes
+- reply message contains a sequence of bytes from the selected memory range
+
+
+camera addresses:
+0x00000004: GevDeviceModeIsBigEndian (= 0x80000001)
+
+0x00000200: 512b = config file in camera memory ("Local:AviivaUM2GE_v2.1.zip;30000;3B21")
+0x00000400: 512b = config file in camera memory ("File:AviivaUM2GE_v2.1.xml")
+
+0x00000900: GevMessageChannelCountReg (= 1)
+0x00000934: GevSupportedOptionalCommandsConcatenationReg (multiple operations per cmd supported?) (= 0xc000000b)
+0x00000938: GevHeartbeatTimeoutReg (heartbeat/lifesign must happen every x ms..?) (= 3000 ms)
+
+0x00000a00: GevCCP: grant access to application (initial = 0, pc writes 0x03 early during init)
+0x00000b00: bits 16-31 = client pc message data port (= 0xd6d8 = 55000)
+0x00000b10: GevMCDA: message channel address (= 0x0b, 0x00, 0xfe, 0xa9)
+
+0x00000d00: bits 16-31: GevSCPHostPort = client pc data stream port (= 12221) (written during init)
+0x00000d04: GevSCPS_PacketSize (= 1080)
+0x00000d18: GevSCDA? (client pc address)
+
+(camera-specific parameters?? seems like they are transmitted in little endian format..)
+0x0001000c: grab active register..?
+0x00010108: frame height (0x0002) (= 512 lines)
+0x00010204: grab active register..?
+0x00010400: gain level (range 0x00000000 - 0x0b000000)
+
+0x00030000: binary config file (zipped) (max. download 0x210 bytes per chunk)
+
+initialization/grab start
+-------------------------
+global init commands:
+1. write: 0x00000a00 = 0x00000003
+...more?
+
+"start grab" sequence:
+1. write: 0x00000d00 = 0x00002fbd (data stream port = 12221)
+2. write: 0x00000d18 = 0xa9fe000b (data stream address = 169.254.0.11)
+3. write: 0x00000d04 = 0x00000438 (data stream packet size = 1080 ..?)
+
+4. write: 0x0001000c = 0x01000000
+5. read:  0x00010010 (must be 0x01000000) (indicates 'camera has started'??)
+6. read:  0x00010124 (must be 0x00000c00) ??
+7. write: 0x00010204 = 0x00000000
+
+
+"grab stop" sequence:
+1. write: 0x00010204 = 0x01000000
+2. read:  0x0001020c (until return value == 0x01000000)!
+
+
+data stream contents
+--------------------
+frame header = 44 bytes
+0-3:   (int?) frame number
+4-5:  (short) = 0x0100
+6-7:  (short) = 0x0000
+8-11:  (int?) = 0x00000001
+12-15: (int?) = 0x00000000
+16-19: (int) timestamp (scale?)
+20-25: 0x01 0x08 0x00 0x01 0x00 0x00
+26-27: 0x04 0x00 (frame width = 1024 pix)
+28-29: 0x00 0x00
+30-31: 0x02 0x00 (frame height = 512 pix)
+	   0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00
+
+frame data = 1052 bytes
+0-3: (int?) frame number
+4-5: (short) 0x03 0x00
+6-7: (short) packet number inside frame
+8-:  (byte) 1044 bytes frame data
+
+frame footer = 16 bytes
+0-3: (int?) frame number
+4-5: (short) 0x02 00
+6-7: (short) packet number inside frame
+8-11: (int?) = 0x00000001
+12-15:(int?) = 0x00000200
