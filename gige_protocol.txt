@@ -9,7 +9,15 @@ message header = 8 bytes
 6-7: (short) incremental message number (nost NOT be 0!)(will be copied to reply)
 xxx: payload
 -----------------
- 
+
+resend request packet:
+0-1: (short) magic number: 0x42, 0x00
+2-3: (short) message type: 0x00, 0x40
+4-5: (short) payload size in bytes: 0x00, 0x0c
+6-7: (short) incremental message number (nost NOT be 0!)(will be copied to reply)
+8-11: (int)  image number
+12-15:(int)  from packet no ?
+16-19:(int)  to packet no ?
 
 camera -> pc
 ------------
@@ -103,7 +111,7 @@ frame header = 44 bytes
 26-27: 0x04 0x00 (frame width = 1024 pix)
 28-29: 0x00 0x00
 30-31: 0x02 0x00 (frame height = 512 pix)
-	   0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00
+     0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00
 
 frame data = 1052 bytes
 0-3: (int?) frame number
