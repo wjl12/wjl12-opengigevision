@@ -5,10 +5,10 @@
 #include <vigra/stdimage.hxx>
 #include <asio.hpp>
 
-class GvspReader
+class GvspManager
 {
   public:
-    GvspReader(asio::io_service& service, int nPort):
+    GvspManager(asio::io_service& service, int nPort):
         m_socket(service, asio::ip::udp::endpoint(asio::ip::udp::v4(), nPort)),
         m_nCurrPartOfFrame(0),
         m_nImg(0),
@@ -17,14 +17,21 @@ class GvspReader
       StartReceive();
     }
 
+    ~GvspManager()
+    {
+      Stop();
+      // TODO: socket wait or close
+    }
+
     void Stop() { m_bRun = false; }
 
   private:
     void StartReceive()
     {
       m_bRun = true;
-      m_socket.async_receive_from(asio::buffer(m_buff), m_endpoint,
-                                  boost::bind(&GvspReader::RecHandler, this,
+      asio::ip::udp::endpoint ep;
+      m_socket.async_receive_from(asio::buffer(m_buff), ep,
+                                  boost::bind(&GvspManager::RecHandler, this,
                                               asio::placeholders::error,
                                               asio::placeholders::bytes_transferred));
     }
@@ -34,8 +41,8 @@ class GvspReader
       if (!error || error == asio::error::message_size)
       {
         uint16_t nPartOfFrame = ntohs(((uint16_t*)&m_buff)[3]);
-//        std::cout << "Got data:" << nBytes << " bytes\tFrame# " << ntohl(((uint32_t*)&m_buff)[0])
-//                  << "\tPart of frame# " << nPartOfFrame;
+       // std::cout << "Got data:" << nBytes << " bytes\tFrame# " << ntohl(((uint32_t*)&m_buff)[0])
+       //           << "\tPart of frame# " << nPartOfFrame;
 
         if(m_buff[4] == 0x01)
         {
@@ -68,10 +75,11 @@ class GvspReader
         if(m_bRun)
           StartReceive();
       }
+      else
+        std::cerr << "Error receiving stream data" << std::endl;
     }
 
     asio::ip::udp::socket m_socket;
-    asio::ip::udp::endpoint m_endpoint;
     boost::array<uint8_t, 2048> m_buff;
     vigra::BImage m_img;
     int m_nCurrPartOfFrame;
