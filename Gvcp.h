@@ -65,6 +65,34 @@ class GvcpManager
     return htonl(((uint32_t*)&recv_buf)[2]);
   }
 
+  std::vector<char> ReadBlock(int addr, uint32_t nSize)
+  {
+    static const int cnHdLen = 12;
+    boost::array<char, 16> buff = {{ 0x42, 0x01, 0x00, 0x84, 0x00, 0x08 }};
+    std::vector<char> retVec;
+    boost::array<char, 528> recv_buf;
+    size_t len = 0;
+
+    do
+    {
+      ((uint16_t*)&buff)[3] = htons(m_nMsgNr++);
+      ((uint32_t*)&buff)[2] = htonl(addr + len);
+      ((uint32_t*)&buff)[3] = htonl((nSize-len < recv_buf.size()-cnHdLen ? nSize-len: recv_buf.size()-cnHdLen));
+      m_sock.send_to(asio::buffer(buff), *m_it);
+
+      asio::ip::udp::endpoint sender_endpoint;
+      size_t nRead = m_sock.receive_from(asio::buffer(recv_buf), sender_endpoint) - cnHdLen;
+      if(nSize - len < recv_buf.size() - cnHdLen)
+        nRead = nSize - len;
+
+      len += nRead;
+      std::copy(recv_buf.begin()+cnHdLen, recv_buf.begin() + cnHdLen + nRead, std::back_inserter(retVec));
+    }
+    while(len < nSize);
+
+    return retVec;
+  }
+
   bool Write(EnAddrs addr, uint32_t nVal)
   {
     boost::array<char, 16> buff = {{ 0x42, 0x01, 0x00, 0x82, 0x00, 0x08 }};
