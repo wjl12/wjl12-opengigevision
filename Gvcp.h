@@ -61,7 +61,8 @@ class GvcpManager
 
     boost::array<char, 256> recv_buf;
     asio::ip::udp::endpoint sender_endpoint;
-    /*size_t len =*/ m_sock.receive_from(asio::buffer(recv_buf), sender_endpoint);
+    if(m_sock.receive_from(asio::buffer(recv_buf), sender_endpoint) != 12)
+      throw std::runtime_error("Error reading data from camera");
 
     return htonl(((uint32_t*)&recv_buf)[2]);
   }
@@ -83,11 +84,8 @@ class GvcpManager
 
       asio::ip::udp::endpoint sender_endpoint;
       size_t nRead = m_sock.receive_from(asio::buffer(recv_buf), sender_endpoint) - cnHdLen;
-      if(nSize - len < recv_buf.size() - cnHdLen)
-        nRead = nSize - len;
-
       len += nRead;
-      std::copy(recv_buf.begin()+cnHdLen, recv_buf.begin() + cnHdLen + nRead, std::back_inserter(retVec));
+      std::copy(recv_buf.begin() + cnHdLen, recv_buf.begin() + cnHdLen + nRead, std::back_inserter(retVec));
     }
     while(len < nSize);
 
@@ -142,8 +140,6 @@ class GvcpManager
 
   void Heartbeat()
   {
-    std::cout << "Bing! " << (Read(ACCESS_CAM) == 0x3) << std::endl;
-
     if(m_bHeartbeatRun == true)
     {
       m_heartbeatTimer->expires_at(m_heartbeatTimer->expires_at() + boost::posix_time::millisec(700));

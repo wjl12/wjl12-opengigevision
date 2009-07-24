@@ -35,8 +35,6 @@ class GenICamManager
     ss << std::hex << aParts[2];
     ss >> nSize;
 
-    std::cout << "Size: " << nSize << std::endl;
-
     return m_gvcp.ReadBlock(nAddr, nSize);
   }
 
