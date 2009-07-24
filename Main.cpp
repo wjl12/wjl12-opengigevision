@@ -1,12 +1,14 @@
 #include <iostream>
 #include <exception>
 #include <asio.hpp>
+#include <fstream>
 #include <boost/format.hpp>
 #include <boost/bind.hpp>
 #include <boost/thread.hpp>
 #include <vigra/stdimage.hxx>
 #include <vigra/impex.hxx>
 
+#include "GenICam.h"
 #include "Gvsp.h"
 #include "Gvcp.h"
 
@@ -22,6 +24,12 @@ int main(int argc, char** argv)
 
     GvcpManager gvcp(service, argv[1], argv[2]);
     std::cout << "Cam Addr: " << gvcp.FindCam().to_string() << std::endl;
+
+    GenICamManager genicam(gvcp);
+    std::vector<char> zipData = genicam.ReadXmlFile();
+    std::ofstream os("out.zip", std::ios::binary);
+    os.write(&zipData[0], zipData.size());
+    os.flush();
 
     // format bool values as strings
     std::cout.setf (std::ios::boolalpha);
