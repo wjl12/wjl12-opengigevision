@@ -54,12 +54,12 @@ class GvcpManager
 
   uint32_t Read(EnAddrs addr)
   {
-    boost::array<char, 12> buff = {{ 0x42, 0x01, 0x00, 0x80, 0x00, 0x04 }};
+    boost::array<uint8_t, 12> buff = {{ 0x42, 0x01, 0x00, 0x80, 0x00, 0x04 }};
     ((uint16_t*)&buff)[3] = htons(m_nMsgNr++);
     ((uint32_t*)&buff)[2] = htonl(addr);
     m_sock.send_to(asio::buffer(buff), *m_it);
 
-    boost::array<char, 256> recv_buf;
+    boost::array<uint8_t, 256> recv_buf;
     asio::ip::udp::endpoint sender_endpoint;
     if(m_sock.receive_from(asio::buffer(recv_buf), sender_endpoint) != 12)
       throw std::runtime_error("Error reading data from camera");
@@ -67,12 +67,12 @@ class GvcpManager
     return htonl(((uint32_t*)&recv_buf)[2]);
   }
 
-  std::vector<char> ReadBlock(int addr, uint32_t nSize)
+  std::vector<int8_t> ReadBlock(int addr, uint32_t nSize)
   {
     static const int cnHdLen = 12;
-    boost::array<char, 16> buff = {{ 0x42, 0x01, 0x00, 0x84, 0x00, 0x08 }};
-    std::vector<char> retVec;
-    boost::array<char, 528> recv_buf;
+    boost::array<int8_t, 16> buff = {{ 0x42, 0x01, 0x00, 0x84, 0x00, 0x08 }};
+    std::vector<int8_t> retVec;
+    boost::array<int8_t, 528> recv_buf;
     size_t len = 0;
 
     do
@@ -94,13 +94,13 @@ class GvcpManager
 
   bool Write(EnAddrs addr, uint32_t nVal)
   {
-    boost::array<char, 16> buff = {{ 0x42, 0x01, 0x00, 0x82, 0x00, 0x08 }};
+    boost::array<uint8_t, 16> buff = {{ 0x42, 0x01, 0x00, 0x82, 0x00, 0x08 }};
     ((uint16_t*)&buff)[3] = htons(m_nMsgNr++);
     ((uint32_t*)&buff)[2] = htonl(addr);
     ((uint32_t*)&buff)[3] = htonl(nVal);
     m_sock.send_to(asio::buffer(buff), *m_it);
 
-    boost::array<char, 256> recv_buf;
+    boost::array<uint8_t, 256> recv_buf;
     asio::ip::udp::endpoint sender_endpoint;
     if(m_sock.receive_from(asio::buffer(recv_buf), sender_endpoint) != 12)
       return false;
@@ -111,11 +111,11 @@ class GvcpManager
 
   asio::ip::address_v4 FindCam()
   {
-    boost::array<char, 8> buff = {{ 0x42, 0x01, 0x00, 0x02, 0x00, 0x00 }};
+    boost::array<uint8_t, 8> buff = {{ 0x42, 0x01, 0x00, 0x02, 0x00, 0x00 }};
     ((uint16_t*)&buff)[3] = htons(m_nMsgNr++);
     m_sock.send_to(asio::buffer(buff), *m_it);
 
-    boost::array<char, 256> recv_buf;
+    boost::array<uint8_t, 256> recv_buf;
     asio::ip::udp::endpoint sender_endpoint;
     m_sock.receive_from(asio::buffer(recv_buf), sender_endpoint);
     asio::ip::address_v4 addr(recv_buf[47] + ((uint32_t(recv_buf[46]))<<8) +

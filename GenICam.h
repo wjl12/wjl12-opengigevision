@@ -5,6 +5,11 @@
 #include <sstream>
 #include <iostream>
 #include <boost/algorithm/string.hpp>
+#include <boost/iostreams/filtering_stream.hpp>
+#include <boost/iostreams/device/back_inserter.hpp>
+#include <boost/iostreams/filter/zlib.hpp>
+#include <boost/iostreams/copy.hpp>
+#include <zlib.h>
 #include "Gvcp.h"
 
 class GenICamManager
@@ -18,7 +23,7 @@ class GenICamManager
 
   std::vector<char> ReadXmlFile()
   {
-    std::vector<char> data = m_gvcp.ReadBlock(GENICAM_ZIPFILEINFO_ADDRESS, 512);
+    std::vector<int8_t> data = m_gvcp.ReadBlock(GENICAM_ZIPFILEINFO_ADDRESS, 512);
     std::string sTxt(data.begin(), data.end());
 
     std::vector<std::string> aParts;
@@ -35,7 +40,21 @@ class GenICamManager
     ss << std::hex << aParts[2];
     ss >> nSize;
 
-    return m_gvcp.ReadBlock(nAddr, nSize);
+    data = m_gvcp.ReadBlock(nAddr, nSize);
+
+    std::cout << "Size:" << data.size() << std::endl;
+    std::ofstream os("out.zip", std::ios::binary);
+    os.write((char*)(&data[0]), data.size());
+    os.flush();
+
+    boost::iostreams::filtering_istream in;
+    in.push(boost::iostreams::zlib_decompressor());
+    in.push(boost::iostreams::basic_array_source<char>((char*)(&data[0]), data.size()));
+
+    std::vector<char> outData;
+    boost::iostreams::copy(in, boost::iostreams::back_inserter(outData));
+
+    return outData;
   }
 
   private:

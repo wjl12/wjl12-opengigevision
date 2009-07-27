@@ -27,9 +27,6 @@ int main(int argc, char** argv)
 
     GenICamManager genicam(gvcp);
     std::vector<char> zipData = genicam.ReadXmlFile();
-    std::ofstream os("out.zip", std::ios::binary);
-    os.write(&zipData[0], zipData.size());
-    os.flush();
 
     // format bool values as strings
     std::cout.setf (std::ios::boolalpha);
