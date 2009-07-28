@@ -26,7 +26,11 @@ int main(int argc, char** argv)
     std::cout << "Cam Addr: " << gvcp.FindCam().to_string() << std::endl;
 
     GenICamManager genicam(gvcp);
-    std::vector<char> zipData = genicam.ReadXmlFile();
+    std::vector<uint8_t> data = genicam.ReadXmlFile();
+
+    std::ofstream os("/tmp/out.xml", std::ios::binary);
+    os.write((char*)(&data[0]), data.size());
+    os.flush();
 
     // format bool values as strings
     std::cout.setf (std::ios::boolalpha);

@@ -5,11 +5,8 @@
 #include <sstream>
 #include <iostream>
 #include <boost/algorithm/string.hpp>
-#include <boost/iostreams/filtering_stream.hpp>
-#include <boost/iostreams/device/back_inserter.hpp>
-#include <boost/iostreams/filter/zlib.hpp>
-#include <boost/iostreams/copy.hpp>
-#include <zlib.h>
+#include <boost/filesystem/operations.hpp>
+#include <zip.h>
 #include "Gvcp.h"
 
 class GenICamManager
@@ -21,9 +18,9 @@ class GenICamManager
 
   }
 
-  std::vector<char> ReadXmlFile()
+  std::vector<uint8_t> ReadXmlFile()
   {
-    std::vector<int8_t> data = m_gvcp.ReadBlock(GENICAM_ZIPFILEINFO_ADDRESS, 512);
+    std::vector<uint8_t> data = m_gvcp.ReadBlock(GENICAM_ZIPFILEINFO_ADDRESS, 512);
     std::string sTxt(data.begin(), data.end());
 
     std::vector<std::string> aParts;
@@ -42,19 +39,41 @@ class GenICamManager
 
     data = m_gvcp.ReadBlock(nAddr, nSize);
 
-    std::cout << "Size:" << data.size() << std::endl;
-    std::ofstream os("out.zip", std::ios::binary);
-    os.write((char*)(&data[0]), data.size());
-    os.flush();
+    // TODO: find a way to decompress the zip-file in menory without writing the file to disk
+    // TODO: use a platform independent path
+    std::string sFilename("/tmp/genicam.zip");
+    std::vector<uint8_t> retData;
 
-    boost::iostreams::filtering_istream in;
-    in.push(boost::iostreams::zlib_decompressor());
-    in.push(boost::iostreams::basic_array_source<char>((char*)(&data[0]), data.size()));
+    try
+    {
+      std::ofstream os(sFilename.c_str(), std::ios::binary);
+      os.write((char*)(&data[0]), data.size());
+      os.flush();
 
-    std::vector<char> outData;
-    boost::iostreams::copy(in, boost::iostreams::back_inserter(outData));
+      struct zip* zz = zip_open(sFilename.c_str(), 0, 0);
+      if(zz == 0)
+        throw std::runtime_error("Error opening genicam zipfile");
 
-    return outData;
+      struct zip_file* zf = zip_fopen_index(zz, 0, 0);
+      if(zf == 0)
+        throw std::runtime_error("Error opening file in zip archive");
+
+      boost::array<uint8_t, 1024> buff;
+
+      int nRead = 0;
+      while((nRead = zip_fread(zf, buff.data(), buff.size())) != 0)
+        std::copy(buff.begin(), buff.end(), std::back_inserter(retData));
+
+      // clean up file from disk
+      boost::filesystem::remove(sFilename);
+    }
+    catch(std::exception& e)
+    {
+      boost::filesystem::remove(sFilename);
+      throw e;
+    }
+
+    return retData;
   }
 
   private:

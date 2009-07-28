@@ -67,12 +67,12 @@ class GvcpManager
     return htonl(((uint32_t*)&recv_buf)[2]);
   }
 
-  std::vector<int8_t> ReadBlock(int addr, uint32_t nSize)
+  std::vector<uint8_t> ReadBlock(int addr, uint32_t nSize)
   {
     static const int cnHdLen = 12;
-    boost::array<int8_t, 16> buff = {{ 0x42, 0x01, 0x00, 0x84, 0x00, 0x08 }};
-    std::vector<int8_t> retVec;
-    boost::array<int8_t, 528> recv_buf;
+    boost::array<uint8_t, 16> buff = {{ 0x42, 0x01, 0x00, 0x84, 0x00, 0x08 }};
+    std::vector<uint8_t> retVec;
+    boost::array<uint8_t, 528> recv_buf;
     size_t len = 0;
 
     do
