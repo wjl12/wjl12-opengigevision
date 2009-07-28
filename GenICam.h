@@ -62,7 +62,7 @@ class GenICamManager
 
       int nRead = 0;
       while((nRead = zip_fread(zf, buff.data(), buff.size())) != 0)
-        std::copy(buff.begin(), buff.end(), std::back_inserter(retData));
+        std::copy(buff.begin(), buff.begin()+nRead, std::back_inserter(retData));
 
       // clean up file from disk
       boost::filesystem::remove(sFilename);
