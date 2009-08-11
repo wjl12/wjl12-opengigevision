@@ -1,0 +1,35 @@
+
+Installation on a Windows system
+================================
+The provided Merge module are supposed to be integrated into a setup by your API supplier.  
+
+For testing purposes use the GenApiTestBinSetup_win32_vc80_v1_1.msi resp. GenApiTestBinSetup_win64_vc80_v1_1.msi In a shell (DOS-box) setup your environment for testing.
+set GENICAM_ROOT_V1_1=c:\Projectes\GenICamTest
+set GENICAM_LOG_CONFIG=c:\Projects\GenICamTest\log\config\TestLogging.properties
+set TEST_RESULT_FILE=c:\Projects\GenICamTest\log\mylog.txt
+
+Installation on a Linux system
+================================
+Installation on a Linux-i686 system extract the files with the -i686 suffix. On a Linux-x64_86 system use the corresponding packages with the -x64_86.tgz suffix.
+
+mkdir /opt/genicam
+tar xzvf genicam-1.1.2-linux-i686.tgz -C /opt/genicam
+tar xzvf genicam-sdk-1.1.2-linux-i686.tgz  -C /opt/genicam
+tar xzvf genicam-tests-1.1.2-linux-i686.tgz -C /opt/genicam
+
+Add these variables to your environment, e.g. by placing these lines in your profile or .bashrc file.
+export GENICAM_ROOT_V1_1=/opt/genicam
+export GENICAM_CACHE=$HOME/tmp
+
+In order to execute the GenApi test using the standard test setting do the following
+export GENICAM_LOG_CONFIG=/opt/genicam/share/genicam/log/config/TestLogging.properties
+export TEST_RESULT_FILE=$HOME/tmp/mylog.txt
+/opt/genicam/bin/GenicamPluginTester /opt/genicam/lib/libgenicam_test.so
+
+Installation of the GenICam-packages at alternative locations is also possible, e.g. if /opt/genicam is not available. Simply adopt the steps above by replacing the path /opt/genicam by a path you prefer.
+
+In case you develop application using the GenICam SDK add
+the GenICam include path to your preproceccesor options, e.g:
+CPPFLAGS  += $(GENICAM_ROOT_V1_1)/include
+and the GenICam lib resp. lib64 path to your linker options, e.g:
+LDFLAGS	  += $(GENICAM_ROOT_V1_1)/lib -lgenicam_base -l genciam_genapi -lgenicam_mathparser -lgenicam_log.

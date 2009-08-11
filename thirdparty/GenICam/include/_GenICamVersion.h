@@ -1,0 +1,7 @@
+//  This file is generated automatically. Do not modify! 
+#define GENICAM_VERSION_MAJOR 1 
+#define GENICAM_VERSION_MINOR 1 
+#define GENICAM_VERSION_SUBMINOR 2
+#define GENICAM_VERSION_BUILD 0 
+#define GENICAM_VERSION_PRERELEASE 1 
+#define GENICAM_VERSION_PRIVATEBUILD 0
