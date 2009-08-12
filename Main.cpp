@@ -26,27 +26,26 @@ int main(int argc, char** argv)
     std::cout << "Cam Addr: " << gvcp.FindCam().to_string() << std::endl;
 
     GenICamManager genicam(gvcp);
-    std::vector<uint8_t> data = genicam.ReadXmlFile();
+    genicam.ReadXmlFile();
+    genicam.PrintNodes();
 
-    std::ofstream os("/tmp/out.xml", std::ios::binary);
-    os.write((char*)(&data[0]), data.size());
-    os.flush();
+    std::cout << "AA:" << genicam.GetAddress("Cust::PixelFormatReg") << std::endl;
 
     // format bool values as strings
     std::cout.setf (std::ios::boolalpha);
 
     std::cout << "Access acquired: "
-              << gvcp.Write(ACCESS_CAM, ACCESS_CAM_VALUE) << std::endl;
+              << gvcp.Write(genicam.GetAddress("Cust::GevCCPReg"), EXCLUSIVE_ACCESS) << std::endl;
     std::cout << "Set stream port: "
-              << gvcp.Write(DATASTREAM_PORT, 12221) << std::endl;
+              << gvcp.Write(genicam.GetAddress("Std::GevSCPHostPort"), 12221) << std::endl;
     std::cout << "Set stream addr: "
-              << gvcp.Write(DATASTREAM_ADDRESS,
+              << gvcp.Write(genicam.GetAddress("Std::GevSCDA"),
                        asio::ip::address_v4::from_string("169.254.0.2").to_ulong()) << std::endl;
     std::cout << "Set pixel format: " << gvcp.Write(PIXEL_FORMAT, PIXEL_FORMAT_8BIT_VALUE) << std::endl;
     std::cout << "Pixel format: " << (gvcp.Read(PIXEL_FORMAT) == PIXEL_FORMAT_8BIT_VALUE ?
                                       "8bit" : "12bit") << std::endl;
     std::cout << "Start: "
-              << gvcp.Write(START_GRAB, 0x0) << std::endl;
+              << gvcp.Write(genicam.GetAddress("Cust::AcquisitionStartReg"), 0x0) << std::endl;
 
     gvcp.StartHeartbeat();
 
@@ -57,7 +56,7 @@ int main(int argc, char** argv)
     gvsp.Stop();
     gvcp.StopHeartbeat();
 
-    std::cout << "Stop: " << gvcp.Write(STOP_GRAB, STOP_GRAB_VALUE) << std::endl;
+    std::cout << "Stop: " << gvcp.Write(genicam.GetAddress("Cust::AcquisitionStopReg"), STOP_GRAB_VALUE) << std::endl;
 
     std::cout << "Waiting..." << std::flush;
     while(gvcp.Read(GRABBING_STOPPED) != STOP_GRAB_VALUE)

@@ -7,12 +7,7 @@
 
 enum EnAddrs
 {
-  ACCESS_CAM = 0x00000a00,
-  DATASTREAM_PORT = 0x00000d00,
-  DATASTREAM_ADDRESS = 0x00000d18,
   DATASTREAM_PACKET_SIZE = 0x00000d04,
-  START_GRAB = 0x00010204,
-  STOP_GRAB = 0x00010204,
   GRABBING_STOPPED = 0x0001020c,
   PIXEL_FORMAT = 0x0001010c,
   GENICAM_ZIPFILEINFO_ADDRESS = 0x00000200
@@ -20,7 +15,7 @@ enum EnAddrs
 
 enum EnVals
 {
-  ACCESS_CAM_VALUE = 0x03,
+  EXCLUSIVE_ACCESS = 0x03,
   STOP_GRAB_VALUE = 0x01000000,
   PIXEL_FORMAT_8BIT_VALUE = 0x01000801,
   PIXEL_FORMAT_12BIT_VALUE = 0x01000c01
@@ -52,7 +47,7 @@ class GvcpManager
     // TODO: add wait for finish
   }
 
-  uint32_t Read(EnAddrs addr)
+  uint32_t Read(uint32_t addr)
   {
     boost::array<uint8_t, 12> buff = {{ 0x42, 0x01, 0x00, 0x80, 0x00, 0x04 }};
     ((uint16_t*)&buff)[3] = htons(m_nMsgNr++);
@@ -67,7 +62,7 @@ class GvcpManager
     return htonl(((uint32_t*)&recv_buf)[2]);
   }
 
-  std::vector<uint8_t> ReadBlock(int addr, uint32_t nSize)
+  std::vector<uint8_t> ReadBlock(uint32_t addr, uint32_t nSize)
   {
     static const int cnHdLen = 12;
     boost::array<uint8_t, 16> buff = {{ 0x42, 0x01, 0x00, 0x84, 0x00, 0x08 }};
@@ -92,7 +87,7 @@ class GvcpManager
     return retVec;
   }
 
-  bool Write(EnAddrs addr, uint32_t nVal)
+  bool Write(uint32_t addr, uint32_t nVal)
   {
     boost::array<uint8_t, 16> buff = {{ 0x42, 0x01, 0x00, 0x82, 0x00, 0x08 }};
     ((uint16_t*)&buff)[3] = htons(m_nMsgNr++);
