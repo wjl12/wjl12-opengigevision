@@ -2,7 +2,7 @@
 #define GVCP_H
 
 #include <memory>
-#include <asio.hpp>
+#include <boost/asio.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 
 enum EnAddrs
@@ -28,16 +28,16 @@ class GvcpManager
 
   public:
 
-  GvcpManager(asio::io_service& service, const std::string& sAddr, const std::string& sPort):
+  GvcpManager(boost::asio::io_service& service, const std::string& sAddr, const std::string& sPort):
       m_service(service),
-      m_sock(m_service, asio::ip::udp::endpoint(asio::ip::udp::v4(), 0)),
-      m_heartbeatTimer(new asio::deadline_timer(m_service, boost::posix_time::millisec(700))),
+      m_sock(m_service, boost::asio::ip::udp::endpoint(boost::asio::ip::udp::v4(), 0)),
+      m_heartbeatTimer(new boost::asio::deadline_timer(m_service, boost::posix_time::millisec(700))),
       m_nMsgNr(1),
       m_bHeartbeatRun(false)
   {
-    asio::ip::udp::resolver resolver(m_service);
+    boost::asio::ip::udp::resolver resolver(m_service);
 
-    asio::ip::udp::resolver_query query(asio::ip::udp::v4(), sAddr, sPort);
+    boost::asio::ip::udp::resolver_query query(boost::asio::ip::udp::v4(), sAddr, sPort);
     m_it = resolver.resolve(query);
   }
 
@@ -52,11 +52,11 @@ class GvcpManager
     boost::array<uint8_t, 12> buff = {{ 0x42, 0x01, 0x00, 0x80, 0x00, 0x04 }};
     ((uint16_t*)&buff)[3] = htons(m_nMsgNr++);
     ((uint32_t*)&buff)[2] = htonl(addr);
-    m_sock.send_to(asio::buffer(buff), *m_it);
+    m_sock.send_to(boost::asio::buffer(buff), *m_it);
 
     boost::array<uint8_t, 256> recv_buf;
-    asio::ip::udp::endpoint sender_endpoint;
-    if(m_sock.receive_from(asio::buffer(recv_buf), sender_endpoint) != 12)
+    boost::asio::ip::udp::endpoint sender_endpoint;
+    if(m_sock.receive_from(boost::asio::buffer(recv_buf), sender_endpoint) != 12)
       throw std::runtime_error("Error reading data from camera");
 
     return htonl(((uint32_t*)&recv_buf)[2]);
@@ -75,10 +75,10 @@ class GvcpManager
       ((uint16_t*)&buff)[3] = htons(m_nMsgNr++);
       ((uint32_t*)&buff)[2] = htonl(addr + len);
       ((uint32_t*)&buff)[3] = htonl((nSize-len < recv_buf.size()-cnHdLen ? nSize-len: recv_buf.size()-cnHdLen));
-      m_sock.send_to(asio::buffer(buff), *m_it);
+      m_sock.send_to(boost::asio::buffer(buff), *m_it);
 
-      asio::ip::udp::endpoint sender_endpoint;
-      size_t nRead = m_sock.receive_from(asio::buffer(recv_buf), sender_endpoint) - cnHdLen;
+      boost::asio::ip::udp::endpoint sender_endpoint;
+      size_t nRead = m_sock.receive_from(boost::asio::buffer(recv_buf), sender_endpoint) - cnHdLen;
       len += nRead;
       std::copy(recv_buf.begin() + cnHdLen, recv_buf.begin() + cnHdLen + nRead, std::back_inserter(retVec));
     }
@@ -93,27 +93,27 @@ class GvcpManager
     ((uint16_t*)&buff)[3] = htons(m_nMsgNr++);
     ((uint32_t*)&buff)[2] = htonl(addr);
     ((uint32_t*)&buff)[3] = htonl(nVal);
-    m_sock.send_to(asio::buffer(buff), *m_it);
+    m_sock.send_to(boost::asio::buffer(buff), *m_it);
 
     boost::array<uint8_t, 256> recv_buf;
-    asio::ip::udp::endpoint sender_endpoint;
-    if(m_sock.receive_from(asio::buffer(recv_buf), sender_endpoint) != 12)
+    boost::asio::ip::udp::endpoint sender_endpoint;
+    if(m_sock.receive_from(boost::asio::buffer(recv_buf), sender_endpoint) != 12)
       return false;
     else
       return recv_buf[11] == 0x01;
   }
 
 
-  asio::ip::address_v4 FindCam()
+  boost::asio::ip::address_v4 FindCam()
   {
     boost::array<uint8_t, 8> buff = {{ 0x42, 0x01, 0x00, 0x02, 0x00, 0x00 }};
     ((uint16_t*)&buff)[3] = htons(m_nMsgNr++);
-    m_sock.send_to(asio::buffer(buff), *m_it);
+    m_sock.send_to(boost::asio::buffer(buff), *m_it);
 
     boost::array<uint8_t, 256> recv_buf;
-    asio::ip::udp::endpoint sender_endpoint;
-    m_sock.receive_from(asio::buffer(recv_buf), sender_endpoint);
-    asio::ip::address_v4 addr(recv_buf[47] + ((uint32_t(recv_buf[46]))<<8) +
+    boost::asio::ip::udp::endpoint sender_endpoint;
+    m_sock.receive_from(boost::asio::buffer(recv_buf), sender_endpoint);
+    boost::asio::ip::address_v4 addr(recv_buf[47] + ((uint32_t(recv_buf[46]))<<8) +
                               ((uint32_t(recv_buf[45]))<<16) + ((uint32_t(recv_buf[44]))<<24));
     return addr;
   }
@@ -122,7 +122,7 @@ class GvcpManager
   {
     m_bHeartbeatRun = true;
     m_heartbeatTimer->async_wait(boost::bind(&GvcpManager::Heartbeat, this));
-    m_ioThread = boost::thread(boost::bind(&asio::io_service::run, &m_service));
+    m_ioThread = boost::thread(boost::bind(&boost::asio::io_service::run, &m_service));
   }
 
   void StopHeartbeat()
@@ -142,10 +142,10 @@ class GvcpManager
     }
   }
 
-  asio::io_service& m_service;
-  asio::ip::udp::socket m_sock;
-  asio::ip::udp::resolver::iterator m_it;
-  std::auto_ptr<asio::deadline_timer> m_heartbeatTimer;
+  boost::asio::io_service& m_service;
+  boost::asio::ip::udp::socket m_sock;
+  boost::asio::ip::udp::resolver::iterator m_it;
+  std::auto_ptr<boost::asio::deadline_timer> m_heartbeatTimer;
   boost::thread m_ioThread;
   int m_nMsgNr;
   bool m_bHeartbeatRun;

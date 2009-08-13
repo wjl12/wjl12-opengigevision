@@ -1,6 +1,6 @@
 #include <iostream>
 #include <exception>
-#include <asio.hpp>
+#include <boost/asio.hpp>
 #include <fstream>
 #include <boost/format.hpp>
 #include <boost/bind.hpp>
@@ -20,7 +20,7 @@ int main(int argc, char** argv)
     if(argc != 3)
       throw std::runtime_error(str(boost::format("Usage: %1% <ip> <port>") % argv[0]));
 
-    asio::io_service service;
+    boost::asio::io_service service;
 
     GvcpManager gvcp(service, argv[1], argv[2]);
     std::cout << "Cam Addr: " << gvcp.FindCam().to_string() << std::endl;
@@ -40,7 +40,7 @@ int main(int argc, char** argv)
               << gvcp.Write(genicam.GetAddress("Std::GevSCPHostPort"), 12221) << std::endl;
     std::cout << "Set stream addr: "
               << gvcp.Write(genicam.GetAddress("Std::GevSCDA"),
-                       asio::ip::address_v4::from_string("169.254.0.2").to_ulong()) << std::endl;
+                       boost::asio::ip::address_v4::from_string("169.254.0.2").to_ulong()) << std::endl;
     std::cout << "Set pixel format: " << gvcp.Write(PIXEL_FORMAT, PIXEL_FORMAT_8BIT_VALUE) << std::endl;
     std::cout << "Pixel format: " << (gvcp.Read(PIXEL_FORMAT) == PIXEL_FORMAT_8BIT_VALUE ?
                                       "8bit" : "12bit") << std::endl;
