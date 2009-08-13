@@ -4,7 +4,7 @@ project(GigEV4Linux)
 include_directories(. /usr/include /usr/include/c++/4.3 thirdparty/GenICam/include)
 add_definitions(-DGENICAM_ROOT_PATH=\"${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/GenICam/\")
 
-set(CMAKE_CXX_FLAGS "-W -Wall -g")
+set(CMAKE_CXX_FLAGS "-W -Wall -Wno-unknown-pragmas -Wno-attributes -g")
 find_package(Boost REQUIRED thread filesystem)
 
 find_library(ZIP_LIBRARY zip REQUIRED)
