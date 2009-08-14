@@ -1,16 +1,16 @@
 cmake_minimum_required(VERSION 2.6)
 project(GigEV4Linux)
 
-set(SOURCES Main.cpp
-            Gvsp.cpp
-            Gvcp.cpp
-            GigEVision.cpp
-            GenICam.cpp)
+set(SOURCES src/Main.cpp
+            src/Gvsp.cpp
+            src/Gvcp.cpp
+            src/GigEVision.cpp
+            src/GenICam.cpp)
 
-set(HEADERS Gvsp.h
-            Gvcp.h
-            GenICam.h
-            GigEVision.h)
+set(HEADERS src/Gvsp.h
+            src/Gvcp.h
+            src/GenICam.h
+            src/GigEVision.h)
 
 
 include_directories(. /usr/include /usr/include/c++/4.3 thirdparty/GenICam/include)
