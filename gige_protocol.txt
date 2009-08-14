@@ -6,7 +6,7 @@ message header = 8 bytes
 0-1: (short) magic number: 0x42, 0x01
 2-3: (short) message type: 0x00, 0x??
 4-5: (short) payload size in bytes
-6-7: (short) incremental message number (nost NOT be 0!)(will be copied to reply)
+6-7: (short) incremental message number (must NOT be 0!)(will be copied to reply)
 xxx: payload
 -----------------
 
@@ -14,7 +14,7 @@ resend request packet:
 0-1: (short) magic number: 0x42, 0x00
 2-3: (short) message type: 0x00, 0x40
 4-5: (short) payload size in bytes: 0x00, 0x0c
-6-7: (short) incremental message number (nost NOT be 0!)(will be copied to reply)
+6-7: (short) incremental message number (must NOT be 0!)(will be copied to reply)
 8-11: (int)  image number
 12-15:(int)  from packet no ?
 16-19:(int)  to packet no ?
